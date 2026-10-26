@@ -1,0 +1,536 @@
+/* WiFi Billing System - Customer Portal Styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.customer-portal {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top, #1E3A8A 0%, #0F172A 55%);
+  color: #E2E8F0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Header */
+.portal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1rem 1rem;
+}
+
+.header-content h1 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #F8FAFC;
+}
+
+.tagline {
+  color: #94A3B8;
+  margin-top: 0.25rem;
+}
+
+.admin-link {
+  background: transparent;
+  border: 1px solid #334155;
+  color: #94A3B8;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.admin-link:hover {
+  border-color: #3B82F6;
+  color: #F8FAFC;
+}
+
+/* Layout */
+.portal-container {
+  flex: 1;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.purchase-card {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+/* Phone input */
+.input-section h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #F1F5F9;
+}
+
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #0F172A;
+  border: 2px solid #334155;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.phone-input-wrapper:focus-within {
+  border-color: #3B82F6;
+}
+
+.phone-input-wrapper.invalid {
+  border-color: #F59E0B;
+}
+
+.phone-prefix {
+  padding: 0.9rem 1rem;
+  background: #1E293B;
+  color: #94A3B8;
+  font-weight: 600;
+  border-right: 1px solid #334155;
+}
+
+.phone-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #F8FAFC;
+  font-size: 1.25rem;
+  letter-spacing: 0.05em;
+  padding: 0.9rem 1rem;
+}
+
+.phone-input:disabled {
+  opacity: 0.6;
+}
+
+.phone-formatted {
+  margin-top: 0.5rem;
+  color: #10B981;
+  font-size: 0.875rem;
+}
+
+.phone-hint {
+  margin-top: 0.5rem;
+  color: #F59E0B;
+  font-size: 0.875rem;
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 1.75rem 0 1.25rem;
+  color: #64748B;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #334155;
+}
+
+.divider span {
+  padding: 0 1rem;
+}
+
+/* Voucher cards */
+.voucher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.voucher-card {
+  position: relative;
+  background: #0F172A;
+  border: 2px solid #334155;
+  border-radius: 14px;
+  padding: 1.25rem 1rem;
+  color: #E2E8F0;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.voucher-card:hover:not(:disabled) {
+  transform: translateY(-3px);
+  border-color: #3B82F6;
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+}
+
+.voucher-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.voucher-card.selected {
+  opacity: 1;
+}
+
+.voucher-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.voucher-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #F8FAFC;
+}
+
+.voucher-duration {
+  font-size: 0.8rem;
+  color: #94A3B8;
+  margin-top: 0.25rem;
+}
+
+.voucher-price {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0.6rem 0 0.25rem;
+}
+
+.voucher-desc {
+  font-size: 0.8rem;
+  color: #64748B;
+}
+
+.loading-spinner {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #334155;
+  border-top-color: #3B82F6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.muted {
+  color: #64748B;
+  font-size: 0.9rem;
+}
+
+.center {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* Status messages */
+.status-message {
+  margin-top: 1.75rem;
+  padding: 1.5rem;
+  border-radius: 14px;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.status-message h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #F8FAFC;
+}
+
+.status-message p {
+  color: #CBD5E1;
+  line-height: 1.5;
+}
+
+.status-message.processing {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.status-message.waiting {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.status-message.success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.status-message.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 0.75rem;
+  border: 3px solid #334155;
+  border-top-color: #3B82F6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.phone-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.instruction {
+  margin-top: 0.5rem;
+  font-weight: 600;
+  color: #FBBF24 !important;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #334155;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 1.25rem auto 0.75rem;
+  max-width: 320px;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, #F59E0B, #FBBF24);
+  border-radius: 999px;
+  animation: indeterminate 1.4s ease-in-out infinite;
+}
+
+.success-icon,
+.error-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 0.75rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #FFF;
+}
+
+.success-icon {
+  background: #10B981;
+  animation: pop 0.4s ease;
+}
+
+.error-icon {
+  background: #EF4444;
+}
+
+.code-label {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94A3B8 !important;
+}
+
+.voucher-code {
+  display: inline-block;
+  margin: 0.5rem 0 0.25rem;
+  padding: 0.75rem 1.5rem;
+  background: #0F172A;
+  border: 2px dashed #10B981;
+  border-radius: 12px;
+  color: #F8FAFC;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+}
+
+.copy-hint {
+  font-size: 0.8rem;
+  color: #64748B !important;
+}
+
+.voucher-details {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  gap: 0.35rem 1rem;
+  margin: 1.25rem 0;
+  text-align: left;
+}
+
+.detail-label {
+  color: #94A3B8 !important;
+  font-size: 0.9rem;
+}
+
+.detail-value {
+  color: #F8FAFC !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.success-message {
+  margin-bottom: 1rem;
+}
+
+.btn-retry {
+  margin-top: 1rem;
+  padding: 0.65rem 1.5rem;
+  background: #3B82F6;
+  color: #FFF;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-retry:hover {
+  background: #2563EB;
+}
+
+.btn-link {
+  margin-top: 1rem;
+  background: none;
+  border: none;
+  color: #94A3B8;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.button-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Info section */
+.info-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.info-card {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.info-card h3 {
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+  color: #F1F5F9;
+}
+
+.info-card p {
+  font-size: 0.875rem;
+  color: #94A3B8;
+}
+
+/* Footer */
+.portal-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #64748B;
+  font-size: 0.85rem;
+}
+
+.footer-links {
+  margin-top: 0.5rem;
+}
+
+.footer-links a {
+  color: #94A3B8;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: #F8FAFC;
+}
+
+/* Animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+@keyframes indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pop {
+  0% { transform: scale(0.4); }
+  80% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .portal-header {
+    padding-top: 1.25rem;
+  }
+
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .purchase-card {
+    padding: 1.25rem;
+  }
+
+  .voucher-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .voucher-code {
+    font-size: 1.5rem;
+    padding: 0.6rem 1rem;
+  }
+}
+
+.btn-connect {
+  display: inline-block;
+  background: #10B981;
+  text-decoration: none;
+}
+
+.btn-connect:hover {
+  background: #059669;
+}

@@ -1,0 +1,34 @@
+# docker compose up -d
+# Then open http://<this machine>:5000/#/admin
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wifi_billing
+      POSTGRES_USER: wifi
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change-me}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wifi -d wifi_billing"]
+      interval: 5s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - backend/.env
+    environment:
+      DATABASE_URL: postgresql://wifi:${DB_PASSWORD:-change-me}@db:5432/wifi_billing
+    ports:
+      - "5000:5000/tcp"
+      - "1812:1812/udp"
+      - "1813:1813/udp"
+
+volumes:
+  pgdata:
