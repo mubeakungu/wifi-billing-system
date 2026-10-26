@@ -46,9 +46,12 @@ IS_PRODUCTION = os.getenv('FLASK_ENV') == 'production'
 
 
 def _database_url():
-    url = os.getenv('DATABASE_URL', '').strip()
+    url = os.getenv('DATABASE_URL', '').strip().strip('"\'').strip()
     if not url:
         return 'sqlite:///' + os.path.join(BASE_DIR, 'wifi_billing.db')
+    if '://' not in url:
+        raise RuntimeError('DATABASE_URL must be a URL like postgresql://user:password@host/dbname '
+                           '(on Render: the database\'s Internal Database URL, not the PSQL command)')
     # Render and Heroku hand out postgres:// URLs, which SQLAlchemy rejects
     if url.startswith('postgres://'):
         url = 'postgresql://' + url[len('postgres://'):]
