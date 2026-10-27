@@ -9,7 +9,8 @@ It works with anything that has a hotspot / captive portal with RADIUS:
 **MikroTik, Ubiquiti UniFi, TP-Link Omada, pfSense, OPNsense, OpenWrt
 (CoovaChilli/openNDS), FortiGate, Cisco/Meraki, Ruckus, Aruba, Cambium, Grandstream**
 and others. Home routers without hotspot support (most **Tenda**, TP-Link Archer/Deco,
-ISP routers) work as access points behind a hotspot gateway, see below.
+ISP routers) work as access points behind a hotspot gateway, or with the
+**built-in gateway**, where the server running this system is the hotspot (see below).
 
 It starts empty: no sample data, no plans and one admin account you create.
 
@@ -123,6 +124,38 @@ Internet ──► hotspot gateway (MikroTik hAP lite / OpenWrt / pfSense) ─�
 
 Set the Tenda/TP-Link to Access Point mode (DHCP off), connect it to the gateway, and
 add the gateway in the Routers tab.
+
+## Built-in gateway (no MikroTik needed)
+
+If your router has no hotspot (most Tenda and home routers), the server running this
+system can be the hotspot itself. It hands out IP addresses to customers with itself as
+their gateway, sends anyone without a valid code to the login page, and lets paying
+customers through until their time runs out.
+
+```
+Internet ──► Tenda (PPPoE, DHCP OFF) ──► customers' phones
+                    │                        │ gateway = this server
+                    └──── this server ◄──────┘ (DHCP, login page :8080, firewall)
+```
+
+Needs a **Linux** server (or Linux VM) **connected to the router by cable**. A VM bridged
+over a Windows/macOS WiFi adapter can't forward other devices' traffic.
+
+1. Give the server a fixed IP (it is never handed out to anyone else),
+   e.g. on Kali/Debian with NetworkManager:
+   `sudo nmcli con mod "Wired connection 1" ipv4.method manual ipv4.addresses 192.168.0.10/24 ipv4.gateway 192.168.0.1 ipv4.dns 8.8.8.8 && sudo nmcli con up "Wired connection 1"`
+2. In `backend/.env` set `PORTAL_URL`, `PUBLIC_API_URL` and `HOTSPOT_LOGIN_URL`
+   (`http://<server-ip>:8080/login`) to that IP. Add your own devices' MAC addresses to
+   `GATEWAY_FREE_MACS` so they never need a code.
+3. Start it: `docker compose --profile gateway up -d --build`
+4. On the router: **turn off its DHCP server** and **turn off IPv6**, then reconnect your
+   phones. They get an address from this server and see the login page.
+
+If the server is off, nobody gets an address: switch the router's DHCP back on.
+Limits: speed limits per plan aren't applied yet (use the router's bandwidth control),
+and someone who types in the router's address by hand as their gateway skips the
+login page. A MikroTik/OpenWrt hotspot doesn't have these limits.
+Other settings: see the top of `gateway/gateway.py`.
 
 ## M-Pesa
 

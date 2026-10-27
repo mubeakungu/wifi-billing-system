@@ -19,7 +19,8 @@ export const VENDORS = [
   ['other', 'Other RADIUS-capable device']
 ];
 
-export const vendorLabel = (key) => (VENDORS.find(([k]) => k === key) || [key, key])[1];
+export const vendorLabel = (key) =>
+  key === 'gateway' ? 'Built-in gateway (this server)' : (VENDORS.find(([k]) => k === key) || [key, key])[1];
 
 const COMMON_LOGIN =
   'Customers log in with the voucher code as the username. If the page also asks for a password, ' +
@@ -102,6 +103,12 @@ export const GUIDES = {
       'Create a guest/hotspot (captive portal) WLAN that authenticates with that RADIUS server and sends accounting.',
       'Add {hosts} to the walled garden / pre-authentication allow list, and link to {portal} on the portal page.',
       COMMON_LOGIN
+    ]
+  },
+  gateway: {
+    steps: [
+      'This server is the hotspot itself (gateway/gateway.py). It was added automatically when the gateway started, so there is nothing to set up here.',
+      'See "Built-in gateway" in the README for how it is installed (DHCP off on your router, this server hands out addresses and lets paying customers through).'
     ]
   },
   other: {

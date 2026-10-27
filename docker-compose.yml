@@ -33,5 +33,25 @@ services:
       - "1812:1812/udp"
       - "1813:1813/udp"
 
+  # Optional: this machine becomes the customers' gateway (for routers without a
+  # hotspot, e.g. Tenda). Start with: docker compose --profile gateway up -d
+  # Turn DHCP off on your router first, see "Built-in gateway" in the README.
+  gateway:
+    profiles: ["gateway"]
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+      network: host
+    restart: unless-stopped
+    depends_on:
+      - app
+    network_mode: host
+    privileged: true
+    env_file:
+      - backend/.env
+    volumes:
+      - gateway-data:/data
+
 volumes:
   pgdata:
+  gateway-data:

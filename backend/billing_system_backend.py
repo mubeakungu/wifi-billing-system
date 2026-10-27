@@ -17,6 +17,7 @@ import hmac
 import ipaddress
 import logging
 import os
+import re
 import secrets
 import threading
 import uuid
@@ -323,7 +324,7 @@ class Router(db.Model):
     """A router, access point controller or firewall that asks us (RADIUS) to log customers in."""
     __tablename__ = 'routers'
     VENDORS = ('mikrotik', 'unifi', 'omada', 'pfsense', 'opnsense', 'openwrt', 'fortigate',
-               'cisco', 'ruckus', 'other')
+               'cisco', 'ruckus', 'other', 'gateway')
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
@@ -967,6 +968,33 @@ def mpesa_callback():
     return accepted
 
 
+def check_voucher_login(code, mac=None, stale_after=timedelta(minutes=11)):
+    """Can this code log in on this device now? Returns (voucher, seconds_left, None)
+    or (None, 0, reason). Starts unused codes. Used by RADIUS and the built-in gateway."""
+    voucher = Voucher.query.filter_by(code=code).first()
+    if not voucher:
+        return None, 0, 'Voucher code not found'
+    if voucher.customer and not voucher.customer.is_active:
+        return None, 0, 'This account is suspended'
+    if voucher.status == 'unused':
+        voucher.activate()
+        db.session.commit()
+    if voucher.refresh_status() != 'active':
+        db.session.commit()
+        return None, 0, 'This voucher has expired'
+    other = (RadiusSession.query
+             .filter(RadiusSession.voucher_id == voucher.id,
+                     RadiusSession.stopped_at.is_(None),
+                     RadiusSession.updated_at >= utcnow() - stale_after)
+             .all())
+    if mac and any(s.mac and s.mac.lower() != mac.lower() for s in other):
+        return None, 0, 'This code is already in use on another device'
+    remaining = int((voucher.expires_at - utcnow()).total_seconds())
+    if remaining <= 0:
+        return None, 0, 'This voucher has expired'
+    return voucher, remaining, None
+
+
 @app.route('/api/vouchers/validate', methods=['POST'])
 def validate_voucher():
     """For the hotspot/router login page: checks a code and starts unused ones."""
@@ -1223,6 +1251,85 @@ def router_login_page():
         html = html.replace(key, value)
     return Response(html, mimetype='text/html',
                     headers={'Content-Disposition': 'attachment; filename=login.html'})
+
+
+# ---------------------------------------------------------------------------
+# Built-in gateway (gateway/gateway.py): this server is the hotspot itself, for
+# routers without hotspot support (e.g. Tenda). It logs customers in over HTTP.
+# ---------------------------------------------------------------------------
+
+GATEWAY_KEY = hmac.new(SECRET_KEY.encode(), b'gateway', hashlib.sha256).hexdigest()[:32]
+
+
+def require_gateway(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not hmac.compare_digest(request.headers.get('X-Gateway-Key', ''), GATEWAY_KEY):
+            return error('Forbidden', 403)
+        return f(*args, **kwargs)
+    return wrapper
+
+
+def gateway_router():
+    router = Router.query.filter_by(vendor='gateway').order_by(Router.id).first()
+    if router is None:
+        router = Router(name='Built-in gateway', vendor='gateway', address='127.0.0.1/32',
+                        secret=secrets.token_hex(16))
+        db.session.add(router)
+    router.last_seen_at = utcnow()
+    router.last_seen_ip = request.remote_addr
+    db.session.commit()
+    return router
+
+
+@app.route('/api/gateway/login', methods=['POST'])
+@require_gateway
+def gateway_login():
+    data = request.get_json(silent=True) or {}
+    code = re.sub(r'\s+', '', data.get('code') or '').upper()
+    mac = (data.get('mac') or '').lower() or None
+    router = gateway_router()
+    voucher, remaining, reason = check_voucher_login(code, mac)
+    if not voucher:
+        return jsonify({'ok': False, 'message': reason}), 403
+    # One open session per device on this gateway
+    (RadiusSession.query.filter_by(router_id=router.id, stopped_at=None, ip=data.get('ip'))
+     .update({'stopped_at': utcnow(), 'terminate_cause': 'User-Request'}, synchronize_session=False))
+    sess = RadiusSession(router_id=router.id, voucher_id=voucher.id, username=code,
+                         acct_session_id=secrets.token_hex(8), mac=mac, ip=data.get('ip'))
+    db.session.add(sess)
+    db.session.commit()
+    return jsonify({'ok': True, 'session_id': sess.acct_session_id, 'seconds': remaining,
+                    'speed_mbps': voucher.voucher_type.speed_mbps or 0,
+                    'plan': voucher.voucher_type.name})
+
+
+@app.route('/api/gateway/heartbeat', methods=['POST'])
+@require_gateway
+def gateway_heartbeat():
+    """The gateway reports who is online; replies with sessions it must cut."""
+    data = request.get_json(silent=True) or {}
+    router = gateway_router()
+    now = utcnow()
+    online = {s.get('session_id'): s for s in data.get('sessions', []) if s.get('session_id')}
+    open_sessions = RadiusSession.query.filter_by(router_id=router.id, stopped_at=None).all()
+    # Sessions the gateway still has but we already ended
+    cut = sorted(set(online) - {s.acct_session_id for s in open_sessions})
+    for sess in open_sessions:
+        info = online.get(sess.acct_session_id)
+        if info is None:
+            sess.stopped_at, sess.terminate_cause = now, 'Session-Timeout'
+            continue
+        sess.updated_at = now
+        sess.input_octets = int(info.get('upload_bytes') or sess.input_octets or 0)
+        sess.output_octets = int(info.get('download_bytes') or sess.output_octets or 0)
+        voucher = sess.voucher
+        if voucher is None or voucher.refresh_status() != 'active' or \
+                (voucher.customer and not voucher.customer.is_active):
+            sess.stopped_at, sess.terminate_cause = now, 'Admin-Reset'
+            cut.append(sess.acct_session_id)
+    db.session.commit()
+    return jsonify({'cut': cut})
 
 
 # ---------------------------------------------------------------------------

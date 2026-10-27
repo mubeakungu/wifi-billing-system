@@ -213,7 +213,8 @@ class RadiusServer:
     def _load_clients(self):
         from billing_system_backend import Router
         clients = []
-        for r in Router.query.filter_by(is_active=True).all():
+        # The built-in gateway logs customers in over HTTP, not RADIUS
+        for r in Router.query.filter(Router.is_active.is_(True), Router.vendor != 'gateway').all():
             try:
                 net = ipaddress.ip_network(r.address.strip(), strict=False)
             except ValueError:
@@ -248,7 +249,7 @@ class RadiusServer:
     # -- handlers -----------------------------------------------------------
 
     def handle_auth(self, packet, raw, client, ip):
-        from billing_system_backend import Voucher, RadiusSession, db, utcnow
+        from billing_system_backend import check_voucher_login
         _, router_id, secret, vendor, router_name = client
 
         if not valid_message_authenticator(raw, packet, secret):
@@ -277,30 +278,9 @@ class RadiusServer:
         else:
             return reject('No password supplied')
 
-        voucher = Voucher.query.filter_by(code=code).first()
+        voucher, remaining, reason = check_voucher_login(code, mac, STALE_AFTER)
         if not voucher:
-            return reject('Voucher code not found')
-        if voucher.customer and not voucher.customer.is_active:
-            return reject('This account is suspended')
-        if voucher.status == 'unused':
-            voucher.activate()
-            db.session.commit()
-        if voucher.refresh_status() != 'active':
-            db.session.commit()
-            return reject('This voucher has expired')
-
-        cutoff = utcnow() - STALE_AFTER
-        other = (RadiusSession.query
-                 .filter(RadiusSession.voucher_id == voucher.id,
-                         RadiusSession.stopped_at.is_(None),
-                         RadiusSession.updated_at >= cutoff)
-                 .all())
-        if mac and any(s.mac and s.mac.lower() != mac.lower() for s in other):
-            return reject('This code is already in use on another device')
-
-        remaining = int((voucher.expires_at - utcnow()).total_seconds())
-        if remaining <= 0:
-            return reject('This voucher has expired')
+            return reject(reason)
         attrs = [attr_int(SESSION_TIMEOUT, remaining),
                  attr_int(ACCT_INTERIM_INTERVAL, INTERIM_INTERVAL),
                  attr_str(REPLY_MESSAGE, f'Welcome! {voucher.voucher_type.name} plan')]
