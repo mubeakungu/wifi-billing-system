@@ -16,7 +16,10 @@ services:
       retries: 20
 
   app:
-    build: .
+    build:
+      context: .
+      # build with the host's network, avoids DNS/timeouts inside VMs
+      network: host
     restart: unless-stopped
     depends_on:
       db:
